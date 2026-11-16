@@ -1,0 +1,25 @@
+#include <EEPROM.h>
+#include "GravityTDS.h"
+
+#define TdsSensorPin 39
+GravityTDS gravityTds;
+
+float temperature = 25,tdsValue = 0;
+
+void setup() {
+    Serial.begin(115200);
+    EEPROM.begin(64);
+    gravityTds.setPin(TdsSensorPin);
+    gravityTds.setAref(3.3);  //reference voltage on ADC, default 5.0V on Arduino UNO
+    gravityTds.setAdcRange(4096);  //1024 for 10bit ADC;4096 for 12bit ADC
+    gravityTds.begin();  //initialization
+}
+
+void loop() {
+    gravityTds.setTemperature(temperature);  // set the temperature and execute temperature compensation
+    gravityTds.update();  //sample and calculate 
+    tdsValue = gravityTds.getTdsValue();  // then get the value
+    Serial.print(tdsValue,2);
+    Serial.println("ppm");
+    delay(1000);
+}
