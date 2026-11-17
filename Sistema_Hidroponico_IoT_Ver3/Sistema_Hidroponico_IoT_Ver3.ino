@@ -61,6 +61,11 @@ LiquidCrystal_I2C lcd(0x27, 20, 4);
 BlynkTimer timer;
 unsigned long time_lcd = 0, timelast_lcd = 0;
 unsigned long timePH = 0, timelastPH = 0;
+unsigned long timeEC = 0, timelastEC = 0;
+unsigned long timeSolTemp = 0, timelastSolTemp = 0;
+unsigned long timeTemperature = 0, timelastTemperature = 0;
+unsigned long timeHimidity = 0, timelastHimidity = 0;
+
 
 #define pinBuzzer 5 // pino Buzzer
 #define relayCH1 13 // Relé canal 1
@@ -69,6 +74,7 @@ unsigned long timePH = 0, timelastPH = 0;
 #define relayCH4 27 // Relé canal 4
 int led_reset = 2;
 int btn_reset = 23;
+int cont = 0;
 
 
 // --------- Funções - Envia dados da ESP32 para Plataforma Blynk ---------
@@ -210,32 +216,76 @@ void loop() {
 
   // ---------- Atualização das Informações do LCD ----------
   time_lcd = millis();
-  if(time_lcd - timelast_lcd >= 1000) {
+  if(time_lcd - timelast_lcd >= 5000) {
     timelast_lcd = time_lcd;
-
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("PH Level: " + String(ph_level));
-    lcd.setCursor(0, 1);
-    lcd.print("Solut Temp: " + String(temp_Solucao_C));
-    lcd.setCursor(0, 2);
-    lcd.print("Water qualit: " + String(ec_ppm));
-    lcd.setCursor(0, 3);
-    lcd.print("Water Level: " + String(nivel_agua));
-  } else {
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("PH Level: " + String(ph_level));
-    lcd.setCursor(0, 1);
-    lcd.print("Solut Temp: " + String(temp_Solucao_C));
-    lcd.setCursor(0, 2);
-    lcd.print("Air Temp: " + String(temperatura));
-    lcd.setCursor(0, 0);
-    lcd.print("Air humid: " + String(humidade));
-  }
-  
-  // ---------- Condições para Procriação da Plantação ----------
     
+    if(cont == 0) {
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("PH Level: " + String(ph_level));
+      lcd.setCursor(0, 1);
+      lcd.print("Solut Temp: " + String(temp_Solucao_C));
+      lcd.setCursor(0, 2);
+      lcd.print("Wat. qualit: " + String(ec_ppm));
+      lcd.setCursor(0, 3);
+      lcd.print("Wat. Level: " + String(nivel_agua) + String(" %"));
+    } else {
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Air Temp: " + String(temperatura));
+      lcd.setCursor(0, 1);
+      lcd.print("Air humid: " + String(humidade));
+    }
 
+    cont++;
+    if(cont >1) {
+      cont = 0;
+    }
+    
+  }
+  // ---------- Condições para Procriação da Plantação ----------
+
+  // Mantenha o pH entre 5,5 e 6,5. A solução nutritiva entre 18°C e 22°C.
+  timePH = millis();
+  if(timePH - timelastPH >= 1000 && ((ph_level<5.5 || ph_level>6.5)  || (temp_Solucao_C<18 || temp_Solucao_C>22))) {
+    timelastPH = timePH;
+    
+    digitalWrite(relayCH1, 1);
+  } else {
+    digitalWrite(relayCH1, 0);
+  }
+
+/*
+  // A EC deve ser de 1,2 a 1,6 mS/cm.
+  timeEC = minllis();
+  if(timeEC - timelastEC >= 1000 && ec_ppm<1.2 || ec_ppm>1.2) {
+    timelastEC = timeEC;
+    // Funcioções por construi
+  }
+*/  
+
+  // O ar deve estar entre 22°C e 28°C (dia).
+  timeTemperature = millis();
+  if(timeTemperature - timelastTemperature >= 1000 && temperatura<22) {
+    timelastTemperature = timeTemperature;
+    
+    digitalWrite(relayCH3, 1);
+  }
+  else{
+    digitalWrite(relayCH3, 0);
+  }
+
+/*
+  // Umidade relativa entre 40% e 60%.
+  timeHimidity = millis();
+  if(timeHimidity - timelastHimidity >= 1000 && humidade<40 || humidade<60) {
+    timelastHimidity = timeHimidity;
+    // Funcioções por construi
+  }
+*/
+    
   delay(10);
 }
+
+
+
