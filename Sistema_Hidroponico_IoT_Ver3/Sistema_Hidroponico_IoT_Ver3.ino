@@ -98,7 +98,9 @@ void level_PH() {
 
   ph_level = 7.0 - ((media_mV - V_PH7) / S_25);
 
-  Blynk.virtualWrite(V0, ph_level);
+  if(ph_level => 0.0 || ph_level <= 14.0) {
+    Blynk.virtualWrite(V0, ph_level);
+  }
 }
 
 // Temperatura da Solução
@@ -171,6 +173,26 @@ void setup() {
   lcd.init();
   lcd.backlight();
 
+  // Carregar informações do sistema
+  lcd.clear();
+  lcd.setCursor(5, 2);
+  lcd.print("Init System...");
+  delay(1000);
+
+  lcd.clear();
+  lcd.setCursor(4, 1);
+  lcd.print("Calibration");
+  lcd.setCursor(8, 2);
+  lcd.print("system");
+  delay(1000);
+
+  lcd.clear();
+  lcd.setCursor(3, 0);
+  lcd.print("Hidroponic");
+  lcd.setCursor(5, 1);
+  lcd.print("system");
+  delay(1000);
+
   // Específicações para portas anlógicas
   analogReadResolution(12); // 12bit
   analogSetAttenuation(ADC_11db); // 3.3V
@@ -236,53 +258,11 @@ void loop() {
       lcd.setCursor(0, 1);
       lcd.print("Air humid: " + String(humidade));
     }
-
     cont++;
-    if(cont >1) {
-      cont = 0;
-    }
-    
-  }
-  // ---------- Condições para Procriação da Plantação ----------
-
-  // Mantenha o pH entre 5,5 e 6,5. A solução nutritiva entre 18°C e 22°C.
-  timePH = millis();
-  if(timePH - timelastPH >= 1000 && ((ph_level<5.5 || ph_level>6.5)  || (temp_Solucao_C<18 || temp_Solucao_C>22))) {
-    timelastPH = timePH;
-    
-    digitalWrite(relayCH1, 1);
-  } else {
-    digitalWrite(relayCH1, 0);
+    if(cont >1) cont = 0;
   }
 
-/*
-  // A EC deve ser de 1,2 a 1,6 mS/cm.
-  timeEC = minllis();
-  if(timeEC - timelastEC >= 1000 && ec_ppm<1.2 || ec_ppm>1.2) {
-    timelastEC = timeEC;
-    // Funcioções por construi
-  }
-*/  
-
-  // O ar deve estar entre 22°C e 28°C (dia).
-  timeTemperature = millis();
-  if(timeTemperature - timelastTemperature >= 1000 && temperatura<22) {
-    timelastTemperature = timeTemperature;
-    
-    digitalWrite(relayCH3, 1);
-  }
-  else{
-    digitalWrite(relayCH3, 0);
-  }
-
-/*
-  // Umidade relativa entre 40% e 60%.
-  timeHimidity = millis();
-  if(timeHimidity - timelastHimidity >= 1000 && humidade<40 || humidade<60) {
-    timelastHimidity = timeHimidity;
-    // Funcioções por construi
-  }
-*/
+  
     
   delay(10);
 }
